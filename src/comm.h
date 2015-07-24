@@ -2,7 +2,6 @@
 
 #include "globals.h"
 #include "util.h"
-#include "main.h"
 
 void comm_setup();
 void comm_first_time_setup();

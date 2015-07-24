@@ -5,7 +5,6 @@
 
 #include "globals.h"
 #include "comm.h"
-#include "main.h"
 
 #include "shim/InverterLayerCompat.h"
 
@@ -33,6 +32,8 @@ static GBitmap *s_bt_bitmap;
 // Data
 static bool s_tapped;
 static GColor bg_color, fg_color;
+
+void main_reload_config();
 
 #ifdef PBL_PLATFORM_APLITE
 static InverterLayer* create_inv_layer(GRect bounds) {

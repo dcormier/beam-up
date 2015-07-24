@@ -7,7 +7,7 @@ Pebble.addEventListener('ready', function(e) {
 });
 
 Pebble.addEventListener('showConfiguration', function(e) {
-  Pebble.openURL('https://dl.dropboxusercontent.com/u/10824180/pebble%20config%20pages/beamup-basalt-configuration.html?version=' + VERSION);
+  Pebble.openURL('https://dl.dropboxusercontent.com/u/10824180/pebble%20config%20pages/beamup-basalt-configuration-staging.html?version=' + VERSION);
 });
 
 Pebble.addEventListener('webviewclosed', function(e) {

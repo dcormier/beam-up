@@ -64,7 +64,7 @@ static void in_recv_handler(DictionaryIterator *iter, void *context) {
   }
 
   vibes_short_pulse();
-  main_reload_config();
+  window_stack_pop_all(true);
 }
 
 static void in_failed_handler(AppMessageResult reason, void *context) {
