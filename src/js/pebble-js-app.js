@@ -19,14 +19,20 @@ Pebble.addEventListener('webviewclosed', function(e) {
     'PERSIST_KEY_BT': '' + json.bluetooth,
     'PERSIST_KEY_BATTERY': '' + json.battery,
     'PERSIST_KEY_HOURLY': '' + json.hourly,
-    'PERSIST_KEY_THEME': '' + json.theme
+    'PERSIST_KEY_THEME': true,
+    'PERSIST_KEY_FG_R': parseInt(json.foreground.substring(2, 4), 16),
+    'PERSIST_KEY_FG_G': parseInt(json.foreground.substring(4, 6), 16),
+    'PERSIST_KEY_FG_B': parseInt(json.foreground.substring(6), 16),
+    'PERSIST_KEY_BG_R': parseInt(json.background.substring(2, 4), 16),
+    'PERSIST_KEY_BG_G': parseInt(json.background.substring(4, 6), 16),
+    'PERSIST_KEY_BG_B': parseInt(json.background.substring(6), 16)
   };
 
-  Pebble.sendAppMessage(options,
-    function(e) {
-      console.log('Settings update successful!');
-    },
-    function(e) {
-      console.log('Settings update failed: ' + JSON.stringify(e));
-    });
+  console.log('Sending option: ' + JSON.stringify(options));
+
+  Pebble.sendAppMessage(options, function(e) {
+    console.log('Settings update successful!');
+  }, function(e) {
+    console.log('Settings update failed: ' + JSON.stringify(e));
+  });
 }); 

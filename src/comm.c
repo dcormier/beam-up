@@ -1,5 +1,11 @@
 #include "comm.h"
 
+#ifdef PBL_BW
+static bool gcolor_is_dark(int r, int g, int b) {
+  return r < 128 && g < 128 && b < 128;
+}
+#endif
+
 static void in_recv_handler(DictionaryIterator *iter, void *context) {
   Tuple *t = dict_read_first(iter);
 
@@ -10,25 +16,45 @@ static void in_recv_handler(DictionaryIterator *iter, void *context) {
     } else {
 #ifdef PBL_PLATFORM_BASALT
       switch(t->key) {
-        case PERSIST_KEY_THEME:
-          // Parse theme string
-          if(strcmp("classic", t->value->cstring) == 0) {
-            persist_write_int(PERSIST_KEY_THEME, THEME_CLASSIC);
-          } else if(strcmp("green", t->value->cstring) == 0) {
-            persist_write_int(PERSIST_KEY_THEME, THEME_GREEN);
-          } else if(strcmp("blue", t->value->cstring) == 0) {
-            persist_write_int(PERSIST_KEY_THEME, THEME_BLUE);
-          } else if(strcmp("red", t->value->cstring) == 0) {
-            persist_write_int(PERSIST_KEY_THEME, THEME_RED);
-          } else if(strcmp("inverted", t->value->cstring) == 0) {
-            persist_write_int(PERSIST_KEY_THEME, THEME_CLASSIC_INVERTED);
-          } else if(strcmp("midnight", t->value->cstring) == 0) {
-            persist_write_int(PERSIST_KEY_THEME, THEME_MIDNIGHT);
-          } else if(strcmp("yellow", t->value->cstring) == 0) {
-            persist_write_int(PERSIST_KEY_THEME, THEME_YELLOW);
+        case PERSIST_KEY_THEME: {
+          APP_LOG(APP_LOG_LEVEL_INFO, "START");
+          // Get foreground color
+          Tuple *color_tuple = dict_find(iter, PERSIST_KEY_FG_R);
+          if(color_tuple) {
+            persist_write_int(PERSIST_KEY_FG_R, (int)color_tuple->value->int32);
+            APP_LOG(APP_LOG_LEVEL_INFO, "value: %d", (int)color_tuple->value->int32);
+          }
+          color_tuple = dict_find(iter, PERSIST_KEY_FG_G);
+          if(color_tuple) {
+            persist_write_int(PERSIST_KEY_FG_G, (int)color_tuple->value->int32);
+            APP_LOG(APP_LOG_LEVEL_INFO, "value: %d", (int)color_tuple->value->int32);
+          }
+          color_tuple = dict_find(iter, PERSIST_KEY_FG_B);
+          if(color_tuple) {
+            persist_write_int(PERSIST_KEY_FG_B, (int)color_tuple->value->int32);
+            APP_LOG(APP_LOG_LEVEL_INFO, "value: %d", (int)color_tuple->value->int32);
+          }
+
+          // Get background color
+          color_tuple = dict_find(iter, PERSIST_KEY_BG_R);
+          if(color_tuple) {
+            persist_write_int(PERSIST_KEY_BG_R, (int)color_tuple->value->int32);
+            APP_LOG(APP_LOG_LEVEL_INFO, "value: %d", (int)color_tuple->value->int32);
+          }
+          color_tuple = dict_find(iter, PERSIST_KEY_BG_G);
+          if(color_tuple) {
+            persist_write_int(PERSIST_KEY_BG_G, (int)color_tuple->value->int32);
+            APP_LOG(APP_LOG_LEVEL_INFO, "value: %d", (int)color_tuple->value->int32);
+          }
+          color_tuple = dict_find(iter, PERSIST_KEY_BG_B);
+          if(color_tuple) {
+            persist_write_int(PERSIST_KEY_BG_B, (int)color_tuple->value->int32);
+            APP_LOG(APP_LOG_LEVEL_INFO, "value: %d", (int)color_tuple->value->int32);
           }
           break;
+        }
         default: 
+          APP_LOG(APP_LOG_LEVEL_ERROR, "Unknown key: %d", (int)t->key);
           break;
       }
 #endif
@@ -38,7 +64,7 @@ static void in_recv_handler(DictionaryIterator *iter, void *context) {
   }
 
   vibes_short_pulse();
-  window_stack_pop_all(true);
+  main_reload_config();
 }
 
 static void in_failed_handler(AppMessageResult reason, void *context) {
@@ -73,6 +99,26 @@ bool comm_get_setting(int key) {
   return persist_read_bool(key);
 }
 
-int comm_get_theme() {
-  return persist_read_int(PERSIST_KEY_THEME);
+GColor comm_get_foreground_color() {
+  int red = persist_read_int(PERSIST_KEY_FG_R);
+  int green = persist_read_int(PERSIST_KEY_FG_G);
+  int blue = persist_read_int(PERSIST_KEY_FG_B);
+
+#ifdef PBL_BW
+  return (gcolor_is_dark(red, green, blue)) ? GColorBlack : GColorWhite;
+#elif PBL_COLOR
+  return GColorFromRGB(red, green, blue);
+#endif
+}
+
+GColor comm_get_background_color() {
+  int red = persist_read_int(PERSIST_KEY_BG_R);
+  int green = persist_read_int(PERSIST_KEY_BG_G);
+  int blue = persist_read_int(PERSIST_KEY_BG_B);
+
+#ifdef PBL_BW
+  return (gcolor_is_dark(red, green, blue)) ? GColorBlack : GColorWhite;
+#elif PBL_COLOR
+  return GColorFromRGB(red, green, blue);
+#endif
 }

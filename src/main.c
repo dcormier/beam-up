@@ -5,6 +5,7 @@
 
 #include "globals.h"
 #include "comm.h"
+#include "main.h"
 
 #include "shim/InverterLayerCompat.h"
 
@@ -235,9 +236,6 @@ static void window_load(Window *window) {
     layer_add_child(window_layer, get_inv_layer(s_beams[i]));  
   }
   s_seconds_layer = create_inv_layer(GRect(0, 0, 144, 0));
-  #ifdef PBL_PLATFORM_BASALT
-  inverter_layer_compat_set_colors(fg_color, bg_color);    
-  #endif
   layer_add_child(window_layer, get_inv_layer(s_seconds_layer));
 
   // Make sure the face is not blank
@@ -257,16 +255,6 @@ static void window_load(Window *window) {
     layer_add_child(window_layer, text_layer_get_layer(g_date_layer));
   }
   s_bt_layer = bitmap_layer_create(GRect(59, 140, 27, 26));
-#ifdef PBL_PLATFORM_APLITE
-  s_bt_bitmap = gbitmap_create_with_resource(RESOURCE_ID_BT);
-#elif PBL_PLATFORM_BASALT
-  if(comm_get_theme() == THEME_CLASSIC_INVERTED) {
-    s_bt_bitmap = gbitmap_create_with_resource(RESOURCE_ID_BT_INV);
-  } else {
-    s_bt_bitmap = gbitmap_create_with_resource(RESOURCE_ID_BT);
-  }
-#endif
-  bitmap_layer_set_bitmap(s_bt_layer, s_bt_bitmap);
 #ifdef PBL_PLATFORM_BASALT
   bitmap_layer_set_compositing_mode(s_bt_layer, GCompOpSet);
 #endif
@@ -281,6 +269,8 @@ static void window_load(Window *window) {
   if(comm_get_setting(PERSIST_KEY_BATTERY)) {
     layer_add_child(window_layer, get_inv_layer(s_battery_layer));
   }
+
+  main_reload_config();
 
   // Set time digits now  
   util_show_time_digits();
@@ -319,6 +309,25 @@ static void window_unload(Window *window) {
 static void init() {
   // Prepare to receive app config
   comm_setup();
+
+  // Nuke persist for protocol changes
+  if(!persist_exists(PERSIST_VERSION_2_5)) {
+    persist_write_bool(PERSIST_VERSION_2_5, true);
+
+    for(int i = 0; i < 12; i++) {
+      persist_delete(i);
+    }
+
+    // Set default colors
+    persist_write_int(PERSIST_KEY_FG_R, 255);
+    persist_write_int(PERSIST_KEY_FG_G, 255);
+    persist_write_int(PERSIST_KEY_FG_B, 255);
+    persist_write_int(PERSIST_KEY_BG_R, 0);
+    persist_write_int(PERSIST_KEY_BG_G, 0);
+    persist_write_int(PERSIST_KEY_BG_B, 0);
+  }
+
+  // Take care of remaining missing persist values
   comm_first_time_setup();
 
   // Setup colors
@@ -326,40 +335,8 @@ static void init() {
   fg_color = GColorWhite;
   bg_color = GColorBlack;
 #elif PBL_PLATFORM_BASALT
-  switch(comm_get_theme()) {
-    case THEME_CLASSIC:
-      fg_color = GColorWhite;
-      bg_color = GColorBlack;
-      break;
-    case THEME_CLASSIC_INVERTED:
-      fg_color = GColorBlack;
-      bg_color = GColorWhite;
-      break;
-    case THEME_GREEN:
-      fg_color = GColorMintGreen;
-      bg_color = GColorIslamicGreen;
-      break;
-    case THEME_BLUE:
-      fg_color = GColorElectricBlue;
-      bg_color = GColorBlueMoon;
-      break;
-    case THEME_RED:
-      fg_color = GColorMelon;
-      bg_color = GColorRed;
-      break;
-    case THEME_YELLOW:
-      fg_color = GColorPastelYellow;
-      bg_color = GColorChromeYellow;
-      break;
-    case THEME_MIDNIGHT:
-      fg_color = GColorWhite;
-      bg_color = GColorOxfordBlue;
-      break;
-    default:
-      fg_color = GColorWhite;
-      bg_color = GColorBlack;
-      break;
-  }
+  fg_color = comm_get_foreground_color();
+  bg_color = comm_get_background_color();
 #endif
 
   // Localize
@@ -367,12 +344,6 @@ static void init() {
 
   // Subscribe to events
   tick_timer_service_subscribe(SECOND_UNIT, handle_tick);
-  if(comm_get_setting(PERSIST_KEY_BT)) {
-    bluetooth_connection_service_subscribe(bt_handler);
-  }
-  if(comm_get_setting(PERSIST_KEY_BATTERY)) {
-    accel_tap_service_subscribe(tap_handler);
-  }  
 
   // Create main window
   s_main_window = window_create();
@@ -398,4 +369,60 @@ int main() {
   deinit();
 
   return 0;
+}
+
+/**
+ * Format the BT icon to match the foreground
+ */
+#ifdef PBL_PLATFORM_BASALT
+static GColor get_pixel(uint8_t *fb_data, GSize fb_size, GPoint pixel) {
+  if(pixel.x >= 0 && pixel.x < 144 && pixel.y >= 0 && pixel.y < 168) {
+    return (GColor) { .argb = fb_data[(pixel.y * fb_size.w) + pixel.x] };
+  } else {
+    return GColorRed;
+  }
+}
+
+static void match_foreground() {
+  uint8_t *data = gbitmap_get_data(s_bt_bitmap);
+  int rsb = gbitmap_get_bytes_per_row(s_bt_bitmap);
+  GSize size = gbitmap_get_bounds(s_bt_bitmap).size;
+
+  GColor foreground_color = comm_get_foreground_color();
+
+  for(int y = 0; y < size.h; y++) {
+    for(int x = 0; x < size.w; x++) {
+      if(gcolor_equal(get_pixel(data, size, GPoint(x, y)), GColorWhite)) {
+        // Replace only white pixels
+        memset(&data[(y * size.w) + x], (uint8_t)foreground_color.argb, 1);
+      }
+    }
+  }
+}
+#endif
+
+void main_reload_config() {
+#ifdef PBL_PLATFORM_BASALT
+  inverter_layer_compat_set_colors(fg_color, bg_color);  
+#endif
+#ifdef PBL_PLATFORM_APLITE
+  if(comm_get_background_color() == GColorWhite) {
+    s_bt_bitmap = gbitmap_create_with_resource(RESOURCE_ID_BT_INV);
+  } else {
+    s_bt_bitmap = gbitmap_create_with_resource(RESOURCE_ID_BT);
+  }
+#elif PBL_PLATFORM_BASALT
+  // Color version has only transparent and white pixels
+  s_bt_bitmap = gbitmap_create_with_resource(RESOURCE_ID_BT);
+
+  match_foreground();
+#endif
+  bitmap_layer_set_bitmap(s_bt_layer, s_bt_bitmap);
+
+  if(comm_get_setting(PERSIST_KEY_BT)) {
+    bluetooth_connection_service_subscribe(bt_handler);
+  }
+  if(comm_get_setting(PERSIST_KEY_BATTERY)) {
+    accel_tap_service_subscribe(tap_handler);
+  }  
 }
