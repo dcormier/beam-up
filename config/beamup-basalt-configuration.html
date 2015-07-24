@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Beam Up Configuration</title>
+    <link rel='stylesheet' type='text/css' href='css/slate.min.css'>
+    <script src='js/slate.min.js'></script>
+    <style>
+    .title {
+      padding: 15px 10px;
+      text-transform: uppercase;
+      font-family: 'PT Sans', sans-serif;
+      font-size: 1.2em;
+      font-weight: 500;
+      color: #888888;
+      text-align: center;
+    }
+    </style>
+  </head>
+  <body>
+    <h1 class='title'>Beam Up Configuration</h1>
+
+    <div class='item-container'>
+      <div class='item-container-content'>
+        <div class='item'>
+          Use this configuration page to set your preferences.
+        </div>
+      </div>
+    </div>
+
+    <div class='item-container'>
+      <div class='item-container-header'>Color Theme</div>
+      <div class='item-container-content'>
+        <label class='item'>
+          Foreground Color
+          <input type='text' class='item-color item-color-normal' id='foreground' name='foreground' value='#FFFFFF'>
+        </label>
+        <label class='item'>
+          Background Color
+          <input type='text' class='item-color item-color-normal' id='background' name='background' value='#000000'>
+        </label>
+      </div>
+      <div class='item-container-footer'>
+        Note: Colors will be approximated to black and white when not available.
+      </div>
+    </div>
+
+    <div class='item-container'>
+      <div class='item-container-header'>Features</div>
+      <div class='item-container-content'>
+        <label class='item'>
+          Show date
+          <input type='checkbox' class='item-toggle' id='check_date' name='check_date'>
+        </label>
+        <label class='item'>
+          Play animations
+          <input type='checkbox' class='item-toggle' id='check_animations' name='check_animations'>
+        </label>
+        <label class='item'>
+          Show disconnected indicator
+          <input type='checkbox' class='item-toggle' id='check_bluetooth' name='check_bluetooth'>
+        </label>
+        <label class='item'>
+          Shake to show battery level
+          <input type='checkbox' class='item-toggle' id='check_battery' name='check_battery'>
+        </label>
+        <label class='item'>
+          Vibrate on the hour
+          <input type='checkbox' class='item-toggle' id='check_hourly' name='check_hourly'>
+        </label>
+      </div>
+    </div>
+
+    <div class='item-container'>
+      <div class='button-container'>
+        <input id='save_button' type='button' class='item-button' value='SEND'>
+      </div>
+    </div>
+
+    <div class='item-container'>
+      <div class='item-container-header'>Current Version</div>
+      <div class='item-container-content'>
+        <div id='current_version' class='item' value='Fetching...'>
+          Fetching...
+        </div>
+      </div>
+    </div>
+
+    <div class='item-container'>
+      <div class='item-container-header'>Latest Version</div>
+      <div class='item-container-content'>
+        <div id='p_version' class='item' value='Fetching...'>
+          Fetching...
+        </div>
+      </div>
+    </div>
+
+    <div class='item-container'>
+      <div class='item-container-header'>Latest News</div>
+      <div class='item-container-content'>
+        <div id='news' class='item'>
+          Fetching...
+        </div>
+      </div>
+    </div>
+
+    <script>
+      function persistWrite(key, value) {
+        localStorage.setItem(key, value);
+      }
+
+      var persistRead = function(key, defaultValue) {
+        if(localStorage.getItem(key) === null) {
+          return defaultValue;
+        } else {
+          return localStorage.getItem(key);
+        }
+      };
+
+      function firstTimeSetup() {
+        if(!persistRead('first-time', false)) {
+          persistWrite('first-time', true);
+          console.log('This is the first launch!');
+
+          // Align with watchapp defaults
+          persistWrite('date', 'false');
+          persistWrite('animations', 'true');
+          persistWrite('bluetooth', 'true');
+          persistWrite('battery', 'false');
+          persistWrite('hourly', 'false');
+          persistWrite('theme', 'classic');
+        }
+      }
+
+      function loadConfig() {
+        document.getElementById('check_date').checked = persistRead('date', 'false') === 'true';
+        document.getElementById('check_animations').checked = persistRead('animations', 'true') === 'true';
+        document.getElementById('check_bluetooth').checked = persistRead('bluetooth', 'true') === 'true';
+        document.getElementById('check_battery').checked = persistRead('battery', 'false') === 'true';
+        document.getElementById('check_hourly').checked = persistRead('hourly', 'false') === 'true';
+        document.getElementById('foreground').value = persistRead('foreground', '#555555');
+        document.getElementById('background').value = persistRead('background', '#555555');
+      }
+
+      function xhrAsyncRequest(url, type, callback) {
+        var xhr = new XMLHttpRequest();
+        xhr.onload = function () {
+          callback(this.responseText);
+        };
+        xhr.open(type, url);
+        xhr.send();
+      };
+
+      function getAppVersionAndNews() {
+        //Get latest
+        var url = 'https://dl.dropboxusercontent.com/u/10824180/pebble%20config%20pages/app_versions.json';
+
+        xhrAsyncRequest(url, 'GET', function(responseText) {
+          var json = JSON.parse(responseText);
+
+          console.log('Got news: ' + json.beamupbasaltnews);
+          console.log('Got version: ' + json.beamupbasalt);
+
+          document.getElementById('p_version').innerHTML = 'Latest version: ' + json.beamupbasalt;
+          document.getElementById('news').innerHTML = '' + json.beamupbasaltnews;
+        });
+
+        //Get local
+        var version = '' + document.location;
+        version = version.substring(version.indexOf('version=') + 'version='.length);
+        document.getElementById('current_version').innerHTML = 'Current version: ' + version;
+      }
+
+      function getQueryParam(variable, defaultValue) {
+        // Find all URL parameters
+        var query = location.search.substring(1);
+        var vars = query.split('&');
+        for (var i = 0; i < vars.length; i++) {
+          var pair = vars[i].split('=');
+
+          // If the query variable parameter is found, decode it to use and return it for use
+          if (pair[0] === variable) {
+            return decodeURIComponent(pair[1]);
+          }
+        }
+        return defaultValue || false;
+      }
+
+      var submitButton = document.getElementById('save_button');
+      submitButton.addEventListener('click', function() {
+        var options = {
+          'date': document.getElementById('check_date').checked ? 'true' : 'false',
+          'animations': document.getElementById('check_animations').checked ? 'true' : 'false',
+          'bluetooth': document.getElementById('check_bluetooth').checked ? 'true' : 'false',
+          'battery': document.getElementById('check_battery').checked ? 'true' : 'false',
+          'hourly': document.getElementById('check_hourly').checked ? 'true' : 'false',
+          'foreground': '' + document.getElementById('foreground').value,
+          'background': '' + document.getElementById('background').value
+        };
+
+        console.log('Saving option: ' + JSON.stringify(options));
+
+        // Save
+        persistWrite('date', options['date']);
+        persistWrite('animations', options['animations']);
+        persistWrite('bluetooth', options['bluetooth']);
+        persistWrite('battery', options['battery']);
+        persistWrite('hourly', options['hourly']);
+        persistWrite('foreground', options['foreground']);
+        persistWrite('background', options['background']);
+
+        // Return
+        console.log('Submitting...');
+        var return_to = getQueryParam('return_to', 'pebblejs://close#');
+        document.location = return_to + encodeURIComponent(JSON.stringify(options));
+      });
+
+      firstTimeSetup();
+      getAppVersionAndNews();
+      loadConfig();
+    </script>
+  </body>
+</html>
