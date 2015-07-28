@@ -19,7 +19,11 @@ void util_write_time_digits(struct tm *t) {
 
   // Hide leading zero
   if(comm_get_setting(PERSIST_KEY_LEADING_ZERO)) {
-    if(clock_is_24h_style() || t->tm_hour < 10) {
+    if(clock_is_24h_style() && t->tm_hour < 9) {
+      // 0 - 9, 10 - 23 required
+      g_time_buffer[0] = ' ';
+    } else if(t->tm_hour > 0 && t->tm_hour < 10) {
+      // 0 (12) ignored, 1 - 9, 10 - 12 ignored
       g_time_buffer[0] = ' ';
     }
   }
