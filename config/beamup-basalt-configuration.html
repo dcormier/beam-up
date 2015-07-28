@@ -67,6 +67,10 @@
           Vibrate on the hour
           <input type='checkbox' class='item-toggle' id='check_hourly' name='check_hourly'>
         </label>
+        <label class='item'>
+          Hide leading zero in 24H mode
+          <input type='checkbox' class='item-toggle' id='leading_zero' name='leading_zero'>
+        </label>
       </div>
     </div>
 
@@ -128,6 +132,7 @@
           persistWrite('battery', 'false');
           persistWrite('hourly', 'false');
           persistWrite('theme', 'classic');
+          persistWrite('leading_zero', 'false');
         }
       }
 
@@ -139,6 +144,7 @@
         document.getElementById('check_hourly').checked = persistRead('hourly', 'false') === 'true';
         document.getElementById('foreground').value = persistRead('foreground', '#555555');
         document.getElementById('background').value = persistRead('background', '#555555');
+        document.getElementById('leading_zero').checked = persistRead('leading_zero', 'false') === 'true';
       }
 
       function xhrAsyncRequest(url, type, callback) {
@@ -194,7 +200,8 @@
           'battery': document.getElementById('check_battery').checked ? 'true' : 'false',
           'hourly': document.getElementById('check_hourly').checked ? 'true' : 'false',
           'foreground': '' + document.getElementById('foreground').value,
-          'background': '' + document.getElementById('background').value
+          'background': '' + document.getElementById('background').value,
+          'leading_zero': '' + document.getElementById('leading_zero').checked
         };
 
         console.log('Saving option: ' + JSON.stringify(options));
@@ -207,6 +214,7 @@
         persistWrite('hourly', options['hourly']);
         persistWrite('foreground', options['foreground']);
         persistWrite('background', options['background']);
+        persistWrite('leading_zero', options['leading_zero']);
 
         // Return
         console.log('Submitting...');

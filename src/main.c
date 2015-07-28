@@ -389,13 +389,13 @@ static void match_foreground() {
   int rsb = gbitmap_get_bytes_per_row(s_bt_bitmap);
   GSize size = gbitmap_get_bounds(s_bt_bitmap).size;
 
-  GColor foreground_color = comm_get_foreground_color();
+  GColor color = comm_get_foreground_color();
 
   for(int y = 0; y < size.h; y++) {
     for(int x = 0; x < size.w; x++) {
       if(gcolor_equal(get_pixel(data, size, GPoint(x, y)), GColorWhite)) {
         // Replace only white pixels
-        memset(&data[(y * size.w) + x], (uint8_t)foreground_color.argb, 1);
+        memset(&data[(y * size.w) + x], (uint8_t)color.argb, 1);
       }
     }
   }

@@ -17,6 +17,13 @@ void util_write_time_digits(struct tm *t) {
   g_state_now[1] = g_time_buffer[1] - '0';
   g_state_now[0] = g_time_buffer[0] - '0';
 
+  // Hide leading zero
+  if(comm_get_setting(PERSIST_KEY_LEADING_ZERO)) {
+    if(clock_is_24h_style() || t->tm_hour < 10) {
+      g_time_buffer[0] = ' ';
+    }
+  }
+
   strftime(g_date_buffer, sizeof(g_date_buffer), "%a %d", t);   //Sun 01
 }
 

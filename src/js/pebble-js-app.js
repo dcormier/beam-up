@@ -1,4 +1,4 @@
-var VERSION = "2.4";
+var VERSION = "2.5";
 
 /******************************** Pebble API **********************************/
 
@@ -25,7 +25,8 @@ Pebble.addEventListener('webviewclosed', function(e) {
     'PERSIST_KEY_FG_B': parseInt(json.foreground.substring(6), 16),
     'PERSIST_KEY_BG_R': parseInt(json.background.substring(2, 4), 16),
     'PERSIST_KEY_BG_G': parseInt(json.background.substring(4, 6), 16),
-    'PERSIST_KEY_BG_B': parseInt(json.background.substring(6), 16)
+    'PERSIST_KEY_BG_B': parseInt(json.background.substring(6), 16),
+    'PERSIST_KEY_LEADING_ZERO': '' + json.leading_zero
   };
 
   console.log('Sending option: ' + JSON.stringify(options));

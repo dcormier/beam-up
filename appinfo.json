@@ -24,7 +24,8 @@
     "PERSIST_KEY_BG_R": 9,
     "PERSIST_KEY_BG_G": 10,
     "PERSIST_KEY_BG_B": 11,
-    "PERSIST_KEY_THEME": 12
+    "PERSIST_KEY_THEME": 12,
+    "PERSIST_KEY_LEADING_ZERO": 13
   },
   "resources": {
     "media": [

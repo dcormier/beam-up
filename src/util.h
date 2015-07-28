@@ -3,6 +3,7 @@
 #include <pebble.h>
 
 #include "globals.h"
+#include "comm.h"
 
 void util_write_time_digits(struct tm *t);
 void util_show_time_digits();

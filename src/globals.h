@@ -14,18 +14,19 @@
 #define X_OFFSET      14
 
 // Settings keys
-#define PERSIST_KEY_DATE     1
-#define PERSIST_KEY_ANIM     2
-#define PERSIST_KEY_BT       3
-#define PERSIST_KEY_BATTERY  4
-#define PERSIST_KEY_HOURLY   5
-#define PERSIST_KEY_FG_R     6
-#define PERSIST_KEY_FG_G     7
-#define PERSIST_KEY_FG_B     8
-#define PERSIST_KEY_BG_R     9
-#define PERSIST_KEY_BG_G     10
-#define PERSIST_KEY_BG_B     11
-#define PERSIST_KEY_THEME    12 // Used to detect colors in dict
+#define PERSIST_KEY_DATE         1
+#define PERSIST_KEY_ANIM         2
+#define PERSIST_KEY_BT           3
+#define PERSIST_KEY_BATTERY      4
+#define PERSIST_KEY_HOURLY       5
+#define PERSIST_KEY_FG_R         6
+#define PERSIST_KEY_FG_G         7
+#define PERSIST_KEY_FG_B         8
+#define PERSIST_KEY_BG_R         9
+#define PERSIST_KEY_BG_G         10
+#define PERSIST_KEY_BG_B         11
+#define PERSIST_KEY_THEME        12 // Used to detect colors in dict
+#define PERSIST_KEY_LEADING_ZERO 13
 
 #define PERSIST_VERSION_2_5  23348  // Nuke for new color protocol
 
