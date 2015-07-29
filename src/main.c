@@ -3,6 +3,8 @@
  * Author: Chris Lewis
  */
 
+// #define TEST
+
 #include "globals.h"
 #include "comm.h"
 
@@ -307,6 +309,26 @@ static void window_unload(Window *window) {
   destroy_inv_layer(s_battery_layer);
 }
 
+#ifdef TEST
+static int s_test_hour = 0;
+
+static void test_handler(void *context) {
+  time_t temp = time(NULL);  
+  struct tm *t = localtime(&temp);  
+
+  t->tm_hour = s_test_hour;
+
+  util_write_time_digits(t);
+  util_show_time_digits();
+
+  if(s_test_hour < 24) {
+    s_test_hour++;
+
+    app_timer_register(1000, test_handler, NULL);
+  }
+}
+#endif
+
 static void init() {
   // Prepare to receive app config
   comm_setup();
@@ -343,8 +365,10 @@ static void init() {
   // Localize
   setlocale(LC_ALL, "");
 
+#ifndef TEST
   // Subscribe to events
   tick_timer_service_subscribe(SECOND_UNIT, handle_tick);
+#endif
 
   // Create main window
   s_main_window = window_create();
@@ -354,6 +378,10 @@ static void init() {
     .unload = window_unload
   });
   window_stack_push(s_main_window, true);
+
+#ifdef TEST
+  app_timer_register(3000, test_handler, NULL);
+#endif
 }
 
 static void deinit() {
