@@ -28,8 +28,7 @@ static InverterLayer *s_seconds_layer, *s_battery_layer;
 static InverterLayerCompat *s_beams[4];
 static InverterLayerCompat *s_seconds_layer, *s_battery_layer;
 #endif
-static BitmapLayer *s_bt_layer;
-static GBitmap *s_bt_bitmap;
+static Layer *s_bt_layer;
 
 // Data
 static bool s_tapped;
@@ -183,10 +182,10 @@ static void handle_tick(struct tm *t, TimeUnits units_changed) {
 
 static void bt_handler(bool connected) {
   if(connected) {
-    layer_set_hidden(bitmap_layer_get_layer(s_bt_layer), true);
+    layer_set_hidden(s_bt_layer, true);
   } else {
     vibes_double_pulse();
-    layer_set_hidden(bitmap_layer_get_layer(s_bt_layer), false);
+    layer_set_hidden(s_bt_layer, false);
   }
 }
 
@@ -212,6 +211,16 @@ static void tap_handler(AccelAxisType axis, int32_t direction) {
 
     app_timer_register(3000, batt_anim_handler, NULL);
   }
+}
+
+static void bt_update_proc(Layer *layer, GContext *ctx) {
+  GRect bounds = layer_get_bounds(layer);
+  graphics_context_set_fill_color(ctx, fg_color);
+
+  graphics_fill_rect(ctx, GRect(0, 4, 10, 4), 0, 0);
+  graphics_fill_rect(ctx, GRect(9, 0, 2, 13), 0, 0);
+  graphics_fill_rect(ctx, GRect(16, 0, 2, 13), 0, 0);
+  graphics_fill_rect(ctx, GRect(18, 4, 10, 4), 0, 0);
 }
 
 static void window_load(Window *window) {
@@ -257,15 +266,13 @@ static void window_load(Window *window) {
   if(comm_get_setting(PERSIST_KEY_DATE)) {
     layer_add_child(window_layer, text_layer_get_layer(g_date_layer));
   }
-  s_bt_layer = bitmap_layer_create(GRect(59, 140, 27, 26));
-#ifdef PBL_PLATFORM_BASALT
-  bitmap_layer_set_compositing_mode(s_bt_layer, GCompOpSet);
-#endif
-  layer_add_child(window_layer, bitmap_layer_get_layer(s_bt_layer));
-  layer_set_hidden(bitmap_layer_get_layer(s_bt_layer), true);
+  s_bt_layer = layer_create(GRect(59, 140, 27, 26));
+  layer_set_update_proc(s_bt_layer, bt_update_proc);
+  layer_add_child(window_layer, s_bt_layer);
+  layer_set_hidden(s_bt_layer, true);
   if(comm_get_setting(PERSIST_KEY_BT)) {
     if(!bluetooth_connection_service_peek()) {
-      layer_set_hidden(bitmap_layer_get_layer(s_bt_layer), false);
+      layer_set_hidden(s_bt_layer, false);
     }
   }
   s_battery_layer = create_inv_layer(GRect(0, 165, 0, 3));
@@ -298,8 +305,7 @@ static void window_unload(Window *window) {
   }
   text_layer_destroy(g_date_layer);
 
-  bitmap_layer_destroy(s_bt_layer);
-  gbitmap_destroy(s_bt_bitmap);
+  layer_destroy(s_bt_layer);
   
   // Free inverter layers
   for(int i = 0; i < 4; i++) {
@@ -400,54 +406,10 @@ int main() {
   return 0;
 }
 
-/**
- * Format the BT icon to match the foreground
- */
-#ifdef PBL_PLATFORM_BASALT
-static GColor get_pixel(uint8_t *fb_data, GSize fb_size, GPoint pixel) {
-  if(pixel.x >= 0 && pixel.x < 144 && pixel.y >= 0 && pixel.y < 168) {
-    return (GColor) { .argb = fb_data[(pixel.y * fb_size.w) + pixel.x] };
-  } else {
-    return GColorRed;
-  }
-}
-
-static void match_foreground() {
-  uint8_t *data = gbitmap_get_data(s_bt_bitmap);
-  int rsb = gbitmap_get_bytes_per_row(s_bt_bitmap);
-  GSize size = gbitmap_get_bounds(s_bt_bitmap).size;
-
-  GColor color = comm_get_foreground_color();
-
-  for(int y = 0; y < size.h; y++) {
-    for(int x = 0; x < size.w; x++) {
-      if(gcolor_equal(get_pixel(data, size, GPoint(x, y)), GColorWhite)) {
-        // Replace only white pixels
-        memset(&data[(y * size.w) + x], (uint8_t)color.argb, 1);
-      }
-    }
-  }
-}
-#endif
-
 void main_reload_config() {
 #ifdef PBL_PLATFORM_BASALT
   inverter_layer_compat_set_colors(fg_color, bg_color);  
 #endif
-#ifdef PBL_PLATFORM_APLITE
-  if(comm_get_background_color() == GColorWhite) {
-    s_bt_bitmap = gbitmap_create_with_resource(RESOURCE_ID_BT_INV);
-  } else {
-    s_bt_bitmap = gbitmap_create_with_resource(RESOURCE_ID_BT);
-  }
-#elif PBL_PLATFORM_BASALT
-  // Color version has only transparent and white pixels
-  s_bt_bitmap = gbitmap_create_with_resource(RESOURCE_ID_BT);
-
-  match_foreground();
-#endif
-  bitmap_layer_set_bitmap(s_bt_layer, s_bt_bitmap);
-
   if(comm_get_setting(PERSIST_KEY_BT)) {
     bluetooth_connection_service_subscribe(bt_handler);
   }

@@ -46,16 +46,6 @@
         "type": "png",
         "name": "IMAGE_MENU_ICON",
         "file": "images/menu_icon.png"
-      },
-      {
-        "type": "png",
-        "name": "BT",
-        "file": "images/bt-bar.png"
-      },
-      {
-        "type": "png",
-        "name": "BT_INV",
-        "file": "images/bt-bar-inv.png"
       }
     ]
   },
