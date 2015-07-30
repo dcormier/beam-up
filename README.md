@@ -20,16 +20,16 @@ Minimal sharp-edged animated watchface for [Pebble](https://getpebble.com) smart
 
 Using the 'Settings' button in the Pebble app after install, choose from the following variants:
 
-* Pick a theme (Basalt only)
-
-* Inverted colours (through 'Inverted Classic' theme on Basalt)
+* Free choice of foreground and background colors thanks to [Slate](http://pebble.github.io/slate/) (Basalt only).
 
 * Show short date
 
 * Animations
 
-* Show disconnected indicator
+* Show Bluetooth disconnected indicator
 
 * Shake to show battery level
 
 * Vibrate on the hour
+
+* Hide leading zero
